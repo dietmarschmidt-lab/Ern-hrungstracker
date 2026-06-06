@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<meta name="theme-color" content="#111111" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Ernährungstracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #111111; --surface: #1a1a1a; --surface2: #222222; --border: #2a2a2a;
+  --gold: #c9a84c; --gold2: #e8c96a; --text: #f0f0f0; --muted: #666; --muted2: #999;
+  --danger: #e05555; --radius: 12px;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; overscroll-behavior: none; }
+#root { max-width: 430px; margin: 0 auto; padding-bottom: 90px; min-height: 100vh; }
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+.topbar-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: .12em; color: var(--gold); }
+.topbar-logo span { color: var(--text); }
+.topbar-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), #7a5a1a); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #000; }
+.greeting { padding: 22px 20px 0; }
+.greeting-hi { font-size: 0.8rem; color: var(--muted2); margin-bottom: 2px; }
+.greeting-name { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: .05em; }
+.date-nav { display: flex; align-items: center; gap: 12px; padding: 14px 20px 0; }
+.date-nav-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; flex: 1; }
+.makros-card { margin: 16px 16px 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+.makros-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .12em; color: var(--muted2); margin-bottom: 10px; }
+.makros-cal-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
+.makros-cal-num { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; line-height: 1; color: var(--gold); }
+.makros-cal-of { font-size: 0.78rem; color: var(--muted2); }
+.makros-cal-bar { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-bottom: 18px; }
+.makros-cal-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold2)); border-radius: 3px; transition: width .5s ease; }
+.macro-row { margin-bottom: 12px; }
+.macro-row:last-child { margin-bottom: 0; }
+.macro-row-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+.macro-row-name { font-size: 0.75rem; color: var(--muted2); letter-spacing: .04em; }
+.macro-row-val { font-size: 0.82rem; font-weight: 700; }
+.macro-row-val span { font-weight: 400; color: var(--muted2); }
+.macro-bar { height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+.macro-bar-fill { height: 100%; border-radius: 2px; transition: width .5s ease; }
+.bar-protein { background: #c9a84c; } .bar-carbs { background: #5ba3c9; } .bar-fat { background: #c97a4c; }
+.section-header { display: flex; align-items: center; justify-content: space-between; padding: 22px 20px 10px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: .04em; }
+.section-actions { display: flex; gap: 8px; }
+.icon-btn { width: 36px; height: 36px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted2); cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.icon-btn:hover { border-color: var(--gold); color: var(--gold); }
+.icon-btn.active { background: var(--gold); color: #000; border-color: var(--gold); }
+.meal-cards { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+.meal-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; align-items: center; overflow: hidden; animation: fadeUp .25s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.meal-img { width: 76px; height: 76px; flex-shrink: 0; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+.meal-info { flex: 1; padding: 12px 14px; min-width: 0; }
+.meal-type-tag { display: inline-flex; align-items: center; justify-content: center; padding: 3px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+.tag-fruehstueck { background: rgba(201,168,76,.15); color: var(--gold); }
+.tag-mittagessen { background: rgba(91,163,201,.15); color: #5ba3c9; }
+.tag-abendessen  { background: rgba(201,122,76,.15); color: #c97a4c; }
+.tag-snack       { background: rgba(100,201,91,.15); color: #64c95b; }
+.meal-name { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px; }
+.meal-macros { display: flex; gap: 10px; margin-top: 6px; }
+.meal-macro { font-size: 0.65rem; color: var(--muted2); }
+.meal-macro strong { color: var(--text); font-weight: 600; }
+.meal-cal { padding: 0 10px 0 0; font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--gold); flex-shrink: 0; }
+.meal-del { background: none; border: none; color: var(--muted); cursor: pointer; padding: 0 12px 0 0; font-size: 0.85rem; transition: color .15s; }
+.meal-del:hover { color: var(--danger); }
+.empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+.empty-icon { font-size: 3rem; margin-bottom: 10px; opacity: .5; }
+.empty p { font-size: 0.82rem; line-height: 1.7; }
+.activity-cards { padding: 0 16px; }
+.activity-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; }
+.activity-name { font-size: 0.78rem; font-weight: 600; }
+.activity-dur { font-size: 0.68rem; color: var(--muted2); margin-top: 2px; }
+.page { padding: 0 16px 20px; }
+.page-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: .04em; padding: 20px 0 14px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; }
+.card-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted2); margin-bottom: 12px; }
+.upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 30px 20px; text-align: center; cursor: pointer; transition: all .2s; background: var(--surface2); position: relative; overflow: hidden; }
+.upload-zone:hover { border-color: var(--gold); background: rgba(201,168,76,.05); }
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.upload-icon { font-size: 2.2rem; margin-bottom: 8px; }
+.upload-text { font-size: 0.8rem; color: var(--muted2); line-height: 1.5; }
+.upload-text strong { color: var(--gold); }
+.img-preview { position: relative; border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; }
+.img-preview img { width: 100%; max-height: 200px; object-fit: cover; display: block; }
+.img-preview-remove { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.75); border: none; color: #fff; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; }
+.ai-item { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.ai-item:last-child { border-bottom: none; }
+.ai-item-name { font-size: 0.85rem; font-weight: 500; }
+.ai-item-sub { font-size: 0.7rem; color: var(--muted2); margin-top: 2px; }
+.ai-add { background: var(--gold); color: #000; border: none; border-radius: 7px; padding: 5px 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer; }
+.scan-area { border-radius: var(--radius); overflow: hidden; background: #000; aspect-ratio: 4/3; position: relative; }
+.scan-area video { width: 100%; height: 100%; object-fit: cover; }
+.scan-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.scan-frame { width: 200px; height: 80px; border: 2px solid var(--gold); border-radius: 6px; box-shadow: 0 0 0 9999px rgba(0,0,0,.45); }
+.scan-line { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 196px; height: 2px; background: var(--gold); opacity: .9; animation: scanMove 2s ease-in-out infinite; }
+@keyframes scanMove { 0%,100%{top:calc(50% - 28px)} 50%{top:calc(50% + 28px)} }
+.form-row { margin-bottom: 12px; }
+.form-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin-bottom: 5px; display: block; }
+.form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; color: var(--text); font-family: inherit; font-size: 0.88rem; outline: none; transition: border-color .2s; }
+.form-input:focus { border-color: var(--gold); }
+.macro-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.btn { width: 100%; padding: 13px; border: none; border-radius: var(--radius); font-family: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #000; }
+.btn-gold:hover { filter: brightness(1.08); }
+.btn-gold:disabled { opacity: .5; cursor: not-allowed; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+.btn-danger-soft { background: rgba(224,85,85,.12); border: 1px solid var(--danger); color: var(--danger); }
+.spinner { width: 18px; height: 18px; border: 2px solid rgba(0,0,0,.25); border-top-color: #000; border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--gold); color: var(--gold); padding: 9px 22px; border-radius: 30px; font-size: 0.8rem; font-weight: 600; z-index: 999; animation: toastIn .3s ease; white-space: nowrap; pointer-events: none; }
+@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(-8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: rgba(17,17,17,.97); backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; z-index: 100; }
+.nav-item { flex: 1; padding: 12px 4px 20px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; color: var(--muted); transition: color .2s; background: none; border: none; font-family: inherit; }
+.nav-item.active { color: var(--gold); }
+.nav-icon { font-size: 1.25rem; }
+.nav-label { font-size: 0.55rem; text-transform: uppercase; letter-spacing: .07em; }
+.type-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.type-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all .15s; background: transparent; color: var(--muted2); font-family: inherit; }
+.type-btn.active { border-color: var(--gold); background: var(--gold); color: #000; }
+.emoji-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.emoji-btn { font-size: 1.2rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; width: 38px; height: 38px; cursor: pointer; transition: all .15s; }
+.emoji-btn.active { background: var(--gold); border-color: var(--gold); }
+.macros-inline { display: flex; justify-content: space-between; background: var(--surface2); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.8rem; }
+::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
+
+const uid = () => Math.random().toString(36).slice(2);
+const calcCal = (p, c, f) => Math.round(p * 4 + c * 4 + f * 9);
+const clamp = (v) => Math.min(100, Math.max(0, v));
+const todayStr = () => new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+const MEAL_TYPES = ["Frühstück", "Mittagessen", "Abendessen", "Snack"];
+const MEAL_TAGS  = { "Frühstück": "fruehstueck", "Mittagessen": "mittagessen", "Abendessen": "abendessen", "Snack": "snack" };
+const EMOJIS = ["🍎","🥩","🥑","🍞","🥗","🥛","🍳","🍚","🥦","🍗","🐟","🥜","🍝","🧀","🫐","🍌","🥕","🍫"];
+
+function App() {
+  const [tab, setTab] = useState("home");
+  const [addMode, setAddMode] = useState(null);
+  const [entries, setEntries] = useState(() => { try { return JSON.parse(localStorage.getItem("et_entries") || "[]"); } catch { return []; } });
+  const [goals, setGoals] = useState(() => { try { return JSON.parse(localStorage.getItem("et_goals") || JSON.stringify({ cal: 1462, protein: 140, carbs: 94, fat: 54 })); } catch { return { cal: 1462, protein: 140, carbs: 94, fat: 54 }; } });
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => { localStorage.setItem("et_entries", JSON.stringify(entries)); }, [entries]);
+  useEffect(() => { localStorage.setItem("et_goals", JSON.stringify(goals)); }, [goals]);
+
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2200); };
+  const addEntry = (e) => { setEntries(p => [{ ...e, id: uid(), time: new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) }, ...p]); showToast("✓ Eingetragen!"); setAddMode(null); setTab("home"); };
+  const removeEntry = (id) => setEntries(p => p.filter(e => e.id !== id));
+  const totals = entries.reduce((a, e) => ({ cal: a.cal+(e.cal||0), protein: a.protein+(e.protein||0), carbs: a.carbs+(e.carbs||0), fat: a.fat+(e.fat||0) }), { cal:0, protein:0, carbs:0, fat:0 });
+
+  return (
+    <>
+      {toast && <div className="toast">{toast}</div>}
+      <div className="topbar">
+        <div className="topbar-logo">ERNÄHRUNGS<span>TRACKER</span></div>
+        <div className="topbar-avatar">D</div>
+      </div>
+
+      {tab === "home" && !addMode && <HomePage entries={entries} goals={goals} totals={totals} onRemove={removeEntry} onAdd={setAddMode} />}
+      {tab === "home" && addMode === "ai"      && <AIPage onAdd={addEntry} onBack={() => setAddMode(null)} />}
+      {tab === "home" && addMode === "barcode"  && <BarcodePage onAdd={addEntry} onBack={() => setAddMode(null)} />}
+      {tab === "home" && addMode === "manual"   && <ManualPage onAdd={addEntry} onBack={() => setAddMode(null)} />}
+      {tab === "goals" && <GoalsPage goals={goals} setGoals={setGoals} />}
+
+      <nav className="bottom-nav">
+        {[{ id:"home", icon:"🏠", label:"Heute" }, { id:"goals", icon:"🎯", label:"Ziele" }].map(n => (
+          <button key={n.id} className={"nav-item" + (tab === n.id && !addMode ? " active" : "")} onClick={() => { setTab(n.id); setAddMode(null); }}>
+            <span className="nav-icon">{n.icon}</span>
+            <span className="nav-label">{n.label}</span>
+          </button>
+        ))}
+      </nav>
+    </>
+  );
+}
+
+function HomePage({ entries, goals, totals, onRemove, onAdd }) {
+  const calPct = clamp(goals.cal > 0 ? totals.cal / goals.cal * 100 : 0);
+  return (
+    <>
+      <div className="greeting">
+        <div className="greeting-hi">Willkommen zurück</div>
+        <div className="greeting-name">Dein Tag</div>
+      </div>
+      <div className="date-nav">
+        <div className="date-nav-label">Heute</div>
+        <div style={{fontSize:"0.72rem",color:"var(--muted2)"}}>{todayStr()}</div>
+      </div>
+
+      <div className="makros-card">
+        <div className="makros-title">Deine Makros</div>
+        <div className="makros-cal-row">
+          <div className="makros-cal-num">{Math.round(totals.cal)}</div>
+          <div className="makros-cal-of">/ {goals.cal} kcal</div>
+        </div>
+        <div className="makros-cal-bar"><div className="makros-cal-fill" style={{width:`${calPct}%`}} /></div>
+        {[
+          { key:"carbs",   label:"Carbs",   cls:"bar-carbs",   color:"#5ba3c9" },
+          { key:"protein", label:"Protein", cls:"bar-protein", color:"#c9a84c" },
+          { key:"fat",     label:"Fett",    cls:"bar-fat",     color:"#c97a4c" },
+        ].map(({ key, label, cls, color }) => {
+          const pct = clamp(goals[key] > 0 ? totals[key] / goals[key] * 100 : 0);
+          return (
+            <div className="macro-row" key={key}>
+              <div className="macro-row-header">
+                <span className="macro-row-name">{label}</span>
+                <span className="macro-row-val" style={{color}}>{Math.round(totals[key])} <span>/ {goals[key]} g</span></span>
+              </div>
+              <div className="macro-bar"><div className={"macro-bar-fill " + cls} style={{width:`${pct}%`}} /></div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="section-header">
+        <div className="section-title">Mahlzeiten</div>
+        <div className="section-actions">
+          <button className="icon-btn" title="KI-Scan" onClick={() => onAdd("ai")}>📸</button>
+          <button className="icon-btn" title="Barcode" onClick={() => onAdd("barcode")}>🔍</button>
+          <button className="icon-btn active" title="Manuell" onClick={() => onAdd("manual")}>＋</button>
+        </div>
+      </div>
+
+      {entries.length === 0
+        ? <div className="empty"><div className="empty-icon">🍽️</div><p>Noch nichts eingetragen.<br />Tippe auf ＋ um loszulegen.</p></div>
+        : <div className="meal-cards">
+            {entries.map(e => (
+              <div className="meal-card" key={e.id}>
+                <div className="meal-img"><span>{e.emoji || "🍽️"}</span></div>
+                <div className="meal-info">
+                  <div className={"meal-type-tag tag-" + (MEAL_TAGS[e.mealType] || "snack")}>{e.mealType || "Snack"}</div>
+                  <div className="meal-name">{e.name}</div>
+                  <div className="meal-macros">
+                    <div className="meal-macro">P <strong>{e.protein}g</strong></div>
+                    <div className="meal-macro">C <strong>{e.carbs}g</strong></div>
+                    <div className="meal-macro">F <strong>{e.fat}g</strong></div>
+                  </div>
+                </div>
+                <div className="meal-cal">{e.cal}</div>
+                <button className="meal-del" onClick={() => onRemove(e.id)}>✕</button>
+              </div>
+            ))}
+          </div>
+      }
+
+      <div className="section-header" style={{paddingTop:24}}>
+        <div className="section-title">Aktivitäten</div>
+        <button className="icon-btn">＋</button>
+      </div>
+      <div className="activity-cards">
+        <div className="activity-card">
+          <div className="activity-name">Keine Aktivität</div>
+          <div className="activity-dur">Heute noch nicht eingetragen</div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function TypeSelector({ value, onChange }) {
+  return (
+    <div className="card">
+      <div className="card-label">Mahlzeit-Typ</div>
+      <div className="type-btns">
+        {MEAL_TYPES.map(t => (
+          <button key={t} className={"type-btn" + (value === t ? " active" : "")} onClick={() => onChange(t)}>{t}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PageHeader({ title, onBack }) {
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:12,paddingTop:16}}>
+      <button className="icon-btn" onClick={onBack}>←</button>
+      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.5rem",letterSpacing:".04em"}}>{title}</div>
+    </div>
+  );
+}
+
+function AIPage({ onAdd, onBack }) {
+  const [imgData, setImgData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState(null);
+  const [mealType, setMealType] = useState("Frühstück");
+  const inputRef = useRef();
+
+  const handleFile = (file) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => { setImgData(e.target.result); setResults(null); };
+    reader.readAsDataURL(file);
+  };
+
+  const analyze = async () => {
+    if (!imgData) return;
+    setLoading(true);
+    try {
+      const base64 = imgData.split(",")[1];
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: [
+            { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } },
+            { type: "text", text: "Analysiere dieses Bild und erkenne alle Lebensmittel. Schätze das Gewicht. Antworte NUR mit JSON-Array ohne Markdown. Format: [{\"name\":\"Apfel\",\"weight\":150,\"emoji\":\"🍎\",\"protein\":0.3,\"carbs\":19,\"fat\":0.2,\"cal\":78}]" }
+          ]}]
+        })
+      });
+      const data = await resp.json();
+      const text = data.content?.find(b => b.type === "text")?.text || "[]";
+      setResults(JSON.parse(text.replace(/```json|```/g, "").trim()));
+    } catch { setResults([{ name: "Fehler bei der Analyse", weight: 0, emoji: "❌", protein: 0, carbs: 0, fat: 0, cal: 0 }]); }
+    setLoading(false);
+  };
+
+  return (
+    <div className="page">
+      <PageHeader title="KI-Scan" onBack={onBack} />
+      <div style={{height:14}} />
+      <TypeSelector value={mealType} onChange={setMealType} />
+      <div className="card">
+        <div className="card-label">Foto analysieren</div>
+        {!imgData
+          ? <div className="upload-zone">
+              <input type="file" accept="image/*" capture="environment" onChange={e => handleFile(e.target.files[0])} />
+              <div className="upload-icon">🍽️</div>
+              <div className="upload-text"><strong>Foto aufnehmen oder hochladen</strong><br />KI erkennt Lebensmittel &amp; Gewicht</div>
+            </div>
+          : <>
+              <div className="img-preview">
+                <img src={imgData} alt="" />
+                <button className="img-preview-remove" onClick={() => { setImgData(null); setResults(null); }}>✕</button>
+              </div>
+              {!results && <button className="btn btn-gold" onClick={analyze} disabled={loading}>
+                {loading ? <><div className="spinner" /> Analysiere...</> : "🔍 Lebensmittel erkennen"}
+              </button>}
+            </>
+        }
+      </div>
+      {results && (
+        <div className="card">
+          <div className="card-label">Erkannte Lebensmittel</div>
+          {results.map((item, i) => (
+            <div className="ai-item" key={i}>
+              <div>
+                <div className="ai-item-name">{item.emoji} {item.name}</div>
+                <div className="ai-item-sub">~{item.weight}g · P:{item.protein}g C:{item.carbs}g F:{item.fat}g · {item.cal} kcal</div>
+              </div>
+              <button className="ai-add" onClick={() => onAdd({ ...item, mealType })}>＋</button>
+            </div>
+          ))}
+          <button className="btn btn-outline" style={{marginTop:12}} onClick={() => results.forEach(item => onAdd({ ...item, mealType }))}>Alle hinzufügen</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BarcodePage({ onAdd, onBack }) {
+  const [product, setProduct] = useState(null);
+  const [weight, setWeight] = useState(100);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [manual, setManual] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const [mealType, setMealType] = useState("Snack");
+  const [zxReady, setZxReady] = useState(!!window.ZXing);
+  const videoRef = useRef(); const streamRef = useRef(); const animRef = useRef(); const imgRef = useRef();
+
+  useEffect(() => {
+    if (window.ZXing) return;
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.3/umd/index.min.js";
+    s.onload = () => setZxReady(true);
+    document.head.appendChild(s);
+  }, []);
+
+  const stopCam = () => { if (animRef.current) cancelAnimationFrame(animRef.current); streamRef.current?.getTracks().forEach(t => t.stop()); setScanning(false); };
+
+  const startCam = async () => {
+    setError(null);
+    if (!zxReady) { setError("Scanner lädt noch..."); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      streamRef.current = stream; videoRef.current.srcObject = stream; await videoRef.current.play(); setScanning(true);
+      const reader = new window.ZXing.BrowserMultiFormatReader();
+      const tick = async () => {
+        if (!videoRef.current || videoRef.current.readyState < 2) { animRef.current = requestAnimationFrame(tick); return; }
+        try { const r = await reader.decodeFromVideoElement(videoRef.current); if (r) { stopCam(); fetchProduct(r.getText()); return; } } catch {}
+        animRef.current = requestAnimationFrame(tick);
+      };
+      animRef.current = requestAnimationFrame(tick);
+    } catch { setError("Kamera nicht verfügbar. Bitte Foto oder manuelle Eingabe nutzen."); }
+  };
+
+  const handleImg = async (file) => {
+    if (!file) return; setError(null); setLoading(true);
+    try {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement("canvas"); canvas.width = img.width; canvas.height = img.height;
+        canvas.getContext("2d").drawImage(img, 0, 0);
+        try {
+          const r = await new window.ZXing.BrowserMultiFormatReader().decodeFromCanvas(canvas);
+          URL.revokeObjectURL(url);
+          if (r) fetchProduct(r.getText()); else { setError("Kein Barcode erkannt."); setLoading(false); }
+        } catch { URL.revokeObjectURL(url); setError("Kein Barcode erkannt."); setLoading(false); }
+      };
+      img.src = url;
+    } catch(e) { setError(e.message); setLoading(false); }
+  };
+
+  const fetchProduct = async (barcode) => {
+    setLoading(true); setProduct(null); setError(null);
+    try {
+      const data = await (await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)).json();
+      if (data.status === 1) {
+        const p = data.product; const n = p.nutriments || {};
+        setProduct({ name: p.product_name || "Unbekannt", brand: p.brands || "", protein100: parseFloat(n["proteins_100g"])||0, carbs100: parseFloat(n["carbohydrates_100g"])||0, fat100: parseFloat(n["fat_100g"])||0, cal100: parseFloat(n["energy-kcal_100g"])||0 });
+      } else setError(`Produkt (${barcode}) nicht gefunden.`);
+    } catch { setError("Verbindungsfehler."); }
+    setLoading(false);
+  };
+
+  const reset = () => { setProduct(null); setManual(""); setError(null); };
+  const computed = product ? {
+    name: product.name + (product.brand ? ` (${product.brand})` : ""), emoji: "🛒", mealType,
+    protein: Math.round(product.protein100 * weight / 100 * 10) / 10,
+    carbs:   Math.round(product.carbs100   * weight / 100 * 10) / 10,
+    fat:     Math.round(product.fat100     * weight / 100 * 10) / 10,
+    cal:     Math.round(product.cal100     * weight / 100),
+  } : null;
+
+  return (
+    <div className="page">
+      <PageHeader title="Barcode" onBack={onBack} />
+      <div style={{height:14}} />
+      <TypeSelector value={mealType} onChange={setMealType} />
+      <div className="card">
+        <div className="card-label">Produkt scannen</div>
+        {!product && !scanning && <>
+          <button className="btn btn-gold" style={{marginBottom:10}} onClick={startCam} disabled={!zxReady}>
+            {zxReady ? "📷 Kamera-Scanner" : "⏳ Lädt..."}
+          </button>
+          <button className="btn btn-outline" style={{marginBottom:10}} onClick={() => imgRef.current?.click()}>
+            🖼️ Barcode-Foto hochladen
+          </button>
+          <input ref={imgRef} type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e => handleImg(e.target.files[0])} />
+          <div style={{display:"flex",gap:8}}>
+            <input className="form-input" placeholder="EAN Barcode manuell" value={manual}
+              onChange={e => setManual(e.target.value)}
+              onKeyDown={e => e.key==="Enter" && manual && fetchProduct(manual)} style={{flex:1}} />
+            <button className="btn btn-outline" style={{width:"auto",padding:"0 14px"}} onClick={() => fetchProduct(manual)} disabled={!manual}>🔎</button>
+          </div>
+        </>}
+        {scanning && <>
+          <div className="scan-area">
+            <video ref={videoRef} muted playsInline style={{width:"100%",height:"100%",objectFit:"cover"}} />
+            <div className="scan-overlay"><div style={{position:"relative"}}><div className="scan-frame" /><div className="scan-line" /></div></div>
+          </div>
+          <button className="btn btn-danger-soft" style={{marginTop:10}} onClick={stopCam}>✕ Abbrechen</button>
+        </>}
+        {!scanning && <video ref={videoRef} style={{display:"none"}} muted playsInline />}
+        {loading && <div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 0",color:"var(--muted2)",fontSize:"0.82rem"}}><div className="spinner" style={{borderTopColor:"var(--gold)"}} />Produktdaten...</div>}
+        {error && <div style={{color:"var(--danger)",fontSize:"0.8rem",marginTop:8,lineHeight:1.5}}>{error}</div>}
+      </div>
+
+      {product && computed && <div className="card">
+        <div style={{fontWeight:700,fontSize:"1rem",marginBottom:4}}>{product.name}</div>
+        {product.brand && <div style={{fontSize:"0.75rem",color:"var(--muted2)",marginBottom:14}}>{product.brand}</div>}
+        <div className="form-row">
+          <label className="form-label">Menge (g)</label>
+          <input className="form-input" type="number" value={weight} min={1} onChange={e => setWeight(Number(e.target.value))} />
+        </div>
+        <div className="macros-inline">
+          <span style={{color:"#c9a84c"}}>P: {computed.protein}g</span>
+          <span style={{color:"#5ba3c9"}}>C: {computed.carbs}g</span>
+          <span style={{color:"#c97a4c"}}>F: {computed.fat}g</span>
+          <span style={{color:"var(--gold)",fontWeight:700}}>{computed.cal} kcal</span>
+        </div>
+        <button className="btn btn-gold" onClick={() => onAdd(computed)}>+ Hinzufügen</button>
+        <button className="btn btn-outline" style={{marginTop:8}} onClick={reset}>Anderes Produkt</button>
+      </div>}
+    </div>
+  );
+}
+
+function ManualPage({ onAdd, onBack }) {
+  const [form, setForm] = useState({ name:"", weight:"", protein:"", carbs:"", fat:"", emoji:"🍽️", mealType:"Frühstück" });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const cal = calcCal(Number(form.protein)||0, Number(form.carbs)||0, Number(form.fat)||0);
+  const submit = () => { if (!form.name) return; onAdd({ ...form, protein: Number(form.protein)||0, carbs: Number(form.carbs)||0, fat: Number(form.fat)||0, cal }); };
+
+  return (
+    <div className="page">
+      <PageHeader title="Manuell" onBack={onBack} />
+      <div style={{height:14}} />
+      <TypeSelector value={form.mealType} onChange={v => set("mealType", v)} />
+      <div className="card">
+        <div className="card-label">Emoji</div>
+        <div className="emoji-grid">
+          {EMOJIS.map(e => <button key={e} className={"emoji-btn" + (form.emoji===e?" active":"")} onClick={() => set("emoji", e)}>{e}</button>)}
+        </div>
+      </div>
+      <div className="card">
+        <div className="card-label">Details</div>
+        <div className="form-row">
+          <label className="form-label">Lebensmittel</label>
+          <input className="form-input" placeholder="z.B. Hähnchenbrust" value={form.name} onChange={e => set("name", e.target.value)} />
+        </div>
+        <div className="form-row">
+          <label className="form-label">Gewicht (g) – optional</label>
+          <input className="form-input" type="number" placeholder="100" value={form.weight} onChange={e => set("weight", e.target.value)} />
+        </div>
+        <div className="form-row">
+          <label className="form-label">Makros (g)</label>
+          <div className="macro-inputs">
+            <input className="form-input" type="number" placeholder="Protein" value={form.protein} onChange={e => set("protein", e.target.value)} style={{borderColor:form.protein?"#c9a84c":""}} />
+            <input className="form-input" type="number" placeholder="Carbs"   value={form.carbs}   onChange={e => set("carbs",   e.target.value)} style={{borderColor:form.carbs  ?"#5ba3c9":""}} />
+            <input className="form-input" type="number" placeholder="Fett"    value={form.fat}     onChange={e => set("fat",     e.target.value)} style={{borderColor:form.fat    ?"#c97a4c":""}} />
+          </div>
+        </div>
+        <div className="macros-inline" style={{marginBottom:14}}>
+          <span style={{color:"var(--muted2)"}}>Kalorien:</span>
+          <strong style={{color:"var(--gold)"}}>{cal} kcal</strong>
+        </div>
+        <button className="btn btn-gold" onClick={submit} disabled={!form.name}>+ Hinzufügen</button>
+      </div>
+    </div>
+  );
+}
+
+function GoalsPage({ goals, setGoals }) {
+  const [local, setLocal] = useState(goals);
+  const set = (k, v) => setLocal(g => ({ ...g, [k]: Number(v) }));
+  return (
+    <div className="page">
+      <div className="page-title">Tagesziele</div>
+      <div className="card">
+        <div className="card-label">Ziele anpassen</div>
+        {[
+          { key:"cal",     label:"Kalorien (kcal)", color:"var(--gold)" },
+          { key:"protein", label:"Protein (g)",     color:"#c9a84c" },
+          { key:"carbs",   label:"Kohlenhydrate (g)",color:"#5ba3c9" },
+          { key:"fat",     label:"Fett (g)",         color:"#c97a4c" },
+        ].map(({ key, label, color }) => (
+          <div className="form-row" key={key}>
+            <label className="form-label" style={{color}}>{label}</label>
+            <input className="form-input" type="number" value={local[key]} onChange={e => set(key, e.target.value)} />
+          </div>
+        ))}
+        <button className="btn btn-gold" onClick={() => setGoals(local)}>Ziele speichern</button>
+      </div>
+      <div className="card" style={{fontSize:"0.78rem",color:"var(--muted2)",lineHeight:1.8}}>
+        <div className="card-label">So funktioniert's</div>
+        <p>📸 <strong style={{color:"var(--text)"}}>KI-Scan</strong> – Foto → Claude erkennt Lebensmittel &amp; Gewicht</p>
+        <p>🔍 <strong style={{color:"var(--text)"}}>Barcode</strong> – Kamera oder manuell → OpenFoodFacts</p>
+        <p>＋ <strong style={{color:"var(--text)"}}>Manuell</strong> – Eigene Einträge mit Makros</p>
+        <p>💾 Daten lokal gespeichert</p>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
